@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>Bouncing ball</title>
+	<style></style>
+</head>
+
+<body>
+	<canvas id="gameCanvas" width="0" height="0" style="border:0px;top: 0px;left:0px;right:0px; position: absolute;"></canvas>
+	<script>
+		// Canvas declaration
+		var canvas = document.getElementById("gameCanvas");
+		canvas.width = (window.innerWidth);
+		canvas.height = (window.innerHeight);
+		var context = canvas.getContext("2d");
+
+		// Env. constants
+		const FPS = 60;
+		const r = 50;
+		const g = 9.8;
+		const maxSpeed = 20;
+		const minSpeed = -20;
+
+		// Ball object
+		var ball = {
+			pos: {
+				x: Math.floor(Math.random() * (canvas.width-2*r)) + r,
+				y: Math.floor(Math.random() * (canvas.height-2*r)) + r
+			},
+			speed: {
+				x: Math.floor(Math.random() * (maxSpeed - minSpeed)) + minSpeed,
+				y: Math.floor(Math.random() * (maxSpeed - minSpeed)) + minSpeed,
+				rot: 0
+			},
+			radius: r,
+			angle: 0,
+			mass: 1,
+			mu: 0.7
+		}
+
+		// Collision and friction factors
+		var xdelta_v = g*ball.mu/FPS
+		var ye_factor = 2;
+		var xe_factor = 2;
+
+		// Loop with "FPS" frames per second
+		setInterval(update, 1000/FPS)
+
+		// Update canvas and draw objects
+		function update() {
+
+			// Logics of bouncing, friction, and rotation
+			if (ball.pos.x < ball.radius && ball.speed.x < 0 ) { // If hit left wall
+				ball.speed.rot = ball.speed.y/ball.radius;
+				ball.speed.x /= -xe_factor;
+			} else if (ball.pos.x + ball.radius > canvas.width && ball.speed.x > 0) { // If hit right wall
+				ball.speed.rot = -ball.speed.y/ball.radius;
+				ball.speed.x /= -xe_factor;
+			} else if (ball.pos.y < ball.radius && ball.speed.y < 0) { // If hit roof
+				ball.speed.rot = -ball.speed.x/ball.radius;
+				ball.speed.y /= -ye_factor;
+			} else if (ball.pos.y + ball.radius >= canvas.height && ball.speed.y > 0) { // If hit floor
+				ball.speed.y /= -ye_factor;
+				ball.speed.rot = ball.speed.x/ball.radius;
+				ball.speed.x -= Math.sign(ball.speed.x) * xdelta_v;
+
+			}
+
+			// Update position
+			ball.pos.x += ball.speed.x;
+			ball.pos.y += ball.speed.y;
+
+			// Effect of gravity
+			ball.speed.y += g/FPS;
+
+			// Spin ball
+			ball.angle += ball.speed.rot;
+
+			// Draw background
+			context.fillStyle = "black";
+			context.fillRect(0,0, canvas.width, canvas.height);
+
+			// Draw ball
+			context.beginPath();
+			context.arc(ball.pos.x, ball.pos.y, ball.radius, 0, 2*Math.PI);
+			context.fillStyle = "red";
+			context.fill();
+
+			// Draw ball line
+			context.beginPath();
+			context.moveTo(ball.pos.x, ball.pos.y);
+			context.lineTo(ball.pos.x + ball.radius*Math.cos(ball.angle), ball.pos.y + ball.radius*Math.sin(ball.angle));
+			context.lineWidth = 2;
+			context.strokeStyle = "#000000";
+			context.stroke();
+		}
+	</script>
+</body>
+
+</html>

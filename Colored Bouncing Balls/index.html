@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>Bouncing ballz</title>
+	<style></style>
+</head>
+
+<body>
+	<canvas id="ballCanvas" width="0" height="0" style="border:0px;top: 0px;left:0px;right:0px; position: absolute;"></canvas>
+	<script>
+		// Canvas declaration
+		let canvas = document.getElementById("ballCanvas")
+		canvas.height = window.innerHeight
+		canvas.width = window.innerWidth
+		let context = canvas.getContext("2d")
+		let nMaxSpeed = 500/2
+		let nMinSpeed = -500/2
+		let nMaxRadius = 50
+		let nMinRadius = 50
+		let numBalls = 10
+		let ballList = []
+		let FPS = 60
+		let colors = ["#ff0000", "#ff7f00", "#ffff00", "#00ff00", "#0000ff", "#4b0082", "#9400d3"]
+		class ballObj {
+			constructor(radius, colorIndex, pos, speed) {
+				this.radius = radius
+				this.colorIndex = colorIndex
+				this.pos = pos
+				this.speed = speed
+				this.mass = 10
+			}
+			drawBall () {
+				context.beginPath();
+				context.arc(this.pos.x, this.pos.y, this.radius, 0, 2*Math.PI);
+				context.fillStyle = colors[this.colorIndex]
+				context.fill()
+			}
+			wallBounce() {
+				if ((this.pos.x < this.radius && this.speed.x < 0) || (this.pos.x + this.radius > canvas.width && this.speed.x > 0))
+					this.speed.x *= -1
+				if ((this.pos.y < this.radius && this.speed.y < 0) || (this.pos.y + this.radius > canvas.height && this.speed.y > 0))
+				this.speed.y *= -1
+			}
+			ballBounce(ballList) {
+				let evil_factor, L
+				// Check in list of ball if collision occured
+				ballList.forEach(ball => {
+					if ((this.pos.x-ball.pos.x)**2+(this.pos.y-ball.pos.y)**2<(this.radius+ball.radius)**2 && !(ball==this) && this.pos.x*ball.pos.x + this.pos.y*ball.pos.y >= 0) {
+						// Distance 
+						L = (this.pos.x-ball.pos.x)**2 + (this.pos.y-ball.pos.y)**2
+						evil_factor = (this.speed.x-ball.speed.x)*(this.pos.x-ball.pos.x)+(this.speed.y-ball.speed.y)*(this.pos.y-ball.pos.y)
+						// "this" change in velocity
+						this.speed.x -= (2*ball.mass*evil_factor*(this.pos.x-ball.pos.x))/(L*(this.mass+ball.mass))
+						this.speed.y -= (2*ball.mass*evil_factor*(this.pos.y-ball.pos.y))/(L*(this.mass+ball.mass))
+						// "ball" change in velocity
+						ball.speed.x += (2*this.mass*evil_factor*(this.pos.x-ball.pos.x))/(L*(this.mass+ball.mass))
+						ball.speed.y += (2*this.mass*evil_factor*(this.pos.y-ball.pos.y))/(L*(this.mass+ball.mass))
+						// Change colors of the balls
+						this.colorIndex = ++this.colorIndex % colors.length
+						ball.colorIndex = ++ball.colorIndex % colors.length
+					}
+				})
+			}
+		}
+
+		// Set up random (valid/no overlapping) positions for balls
+		for (let i=0; i<numBalls; i++) {
+			let r1 = Math.random() * (nMaxRadius-nMinRadius) + nMinRadius
+			let xspeed = Math.floor(Math.random() * (nMaxSpeed-nMinSpeed)) + nMinSpeed
+			let yspeed = Math.floor(Math.random() * (nMaxSpeed-nMinSpeed)) + nMinSpeed
+			do {
+				x1 = Math.floor(Math.random() * (canvas.width-2*r1)) + r1
+				y1 = Math.floor(Math.random() * (canvas.height-2*r1)) + r1
+			} while (!ballList.every(ball => {
+				return (ball.pos.x-x1)**2 + (ball.pos.y-y1)**2 > (r1+ball.radius)**2
+			}));
+			ballList.push(new ballObj(r1, 0, {x:x1,y:y1}, {x:xspeed,y:yspeed}))
+		}
+
+		// Update canvas
+		function update() {
+			// Draw background
+			context.fillStyle = "black";
+			context.fillRect(0,0, canvas.width, canvas.height)
+
+			// Update ball position loop
+			ballList.forEach(ball => {
+
+				ball.pos.x += ball.speed.x/FPS
+				ball.pos.y += ball.speed.y/FPS
+				ball.wallBounce()
+				ball.ballBounce(ballList)
+				ball.drawBall()
+
+			})
+
+		}
+
+		setInterval(update, 1000/FPS)
+
+	</script>
+</body>
+
+</html>
