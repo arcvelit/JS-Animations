@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>Ray Tracing</title>
+</head>
+
+<body>
+	<canvas id="rayCanvas" width="0" height="0" style="border:0px;top: 0px;left:0px;right:0px; position: absolute;"></canvas>
+	<script src="ray.js"></script> 
+	<script src="map.js"></script>
+	<script>
+		let canvas = document.getElementById("rayCanvas")
+		let context = canvas.getContext("2d")
+		canvas.height = window.innerHeight
+		canvas.width = window.innerWidth
+		let characterPos = {x:0, y:0} 
+		const FPS = 60
+		const SPEED = 500/FPS
+		const RENDER_DISTANCE = 500
+		let map = {'w':false,'a':false,'s':false,'d':false}
+
+
+		
+		document.onkeydown = document.onkeyup = function(event) {
+			map[event.key] = event.type == 'keydown'
+		}
+
+		let LightSource = new Candle(2000, RENDER_DISTANCE)
+		let MAP = new GameMap()
+		MAP.addWall({x:100,y:100}, 1200,50)
+		MAP.addWall({x:450,y:400}, 100,100)
+		MAP.addWall({x:1200,y:330}, 100,500)
+		MAP.addWall({x:850,y:300}, 100, 100)
+
+		function update() {
+			characterPos.x += SPEED*(map['d']-map['a'])
+			characterPos.y += SPEED*(map['s']-map['w'])
+			
+			context.fillStyle = "black"
+			context.fillRect(0, 0, canvas.width, canvas.height)	
+
+			LightSource.rays.forEach(beam => beam.draw(characterPos))
+			MAP.boundaries.forEach(boundary => boundary.draw())
+
+			context.beginPath()
+			context.arc(characterPos.x, characterPos.y, 10, 0, 2*Math.PI, false)
+			context.fillStyle = "red"					
+			context.fill()
+
+
+
+		}
+
+		setInterval(update, 1000/FPS)
+
+	</script>
+</body>
+
+</html>
